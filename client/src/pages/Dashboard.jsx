@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth, useTheme } from '../hooks';
-import { Icon, IC, Spinner } from '../components/ui/icons';
+import { Icon, IC, Spinner } from '../components/ui/Icons';
 import { resumeService, interviewService, codeReviewService, learningPathService, bugFixService } from '../services';
 import RobotWave from '../components/shared/RobotWave';
 

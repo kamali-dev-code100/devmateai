@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth, useTheme } from '../hooks';
-import { Icon, IC, Spinner } from '../components/ui/Icons';
+import { Icon, IC, Spinner } from '../components/ui/icons';
+import { resumeService, interviewService, codeReviewService, learningPathService, bugFixService } from '../services';
 import RobotWave from '../components/shared/RobotWave';
 
 // ── Background canvases ────────────────────────────────────────
@@ -38,34 +39,33 @@ function DashAurora() {
 }
 
 // ── Data ───────────────────────────────────────────────────────
-const STATS = [
-  { iconKey: 'resume',    label: 'Analyses run',  value: '142', delta: '↑ 12', sub: 'this week',  iconColor: '#2563eb', glowColor: 'rgba(37,99,235,0.15)' },
-  { iconKey: 'star',      label: 'Avg AI score',  value: '84',  delta: '↑ 6',  sub: 'vs last mo', iconColor: '#059669', glowColor: 'rgba(5,150,105,0.15)'  },
-  { iconKey: 'code',      label: 'Code reviews',  value: '38',  delta: '↑ 4',  sub: 'this week',  iconColor: '#d97706', glowColor: 'rgba(217,119,6,0.15)'  },
-  { iconKey: 'bolt',      label: 'Credits left',  value: '720', delta: null,   sub: 'of 1,000',   iconColor: '#7c3aed', glowColor: 'rgba(124,58,237,0.15)' },
-];
-const TOOLS = [
-  { iconKey: 'resume',    title: 'Resume Analyzer',  desc: 'ATS optimization & AI feedback.',   path: '/resume',      stat: '23 analyses', iconColor: '#2563eb', glow: 'rgba(37,99,235,0.12)' },
-  { iconKey: 'interview', title: 'Interview Trainer', desc: 'Practice technical interviews.',    path: '/interview',   stat: '14 sessions', iconColor: '#059669', glow: 'rgba(5,150,105,0.12)' },
-  { iconKey: 'code',      title: 'Code Reviewer',     desc: 'Security & performance review.',    path: '/code-review', stat: '38 reviews',  iconColor: '#d97706', glow: 'rgba(217,119,6,0.12)' },
-  { iconKey: 'learning',  title: 'Learning Paths',    desc: 'AI-curated roadmaps.',              path: '/learning',    stat: '3 active',    iconColor: '#7c3aed', glow: 'rgba(124,58,237,0.12)' },
-  { iconKey: 'bug',       title: 'Bug Fix AI',        desc: 'Root cause diagnosis & fix.',       path: '/bug-fix',     stat: '12 fixed',    iconColor: '#dc2626', glow: 'rgba(220,38,38,0.12)'  },
+// ── Static config (no hardcoded counts) ──────────────────────
+const TOOLS_CONFIG = [
+  { iconKey: 'resume',    title: 'Resume Analyzer',  desc: 'ATS optimization & AI feedback.',   path: '/resume',      iconColor: '#2563eb', glow: 'rgba(37,99,235,0.12)',  countKey: 'resumes'    },
+  { iconKey: 'interview', title: 'Interview Trainer', desc: 'Practice technical interviews.',    path: '/interview',   iconColor: '#059669', glow: 'rgba(5,150,105,0.12)',  countKey: 'interviews' },
+  { iconKey: 'code',      title: 'Code Reviewer',     desc: 'Security & performance review.',    path: '/code-review', iconColor: '#d97706', glow: 'rgba(217,119,6,0.12)',  countKey: 'codeReviews'},
+  { iconKey: 'learning',  title: 'Learning Paths',    desc: 'AI-curated roadmaps.',              path: '/learning',    iconColor: '#7c3aed', glow: 'rgba(124,58,237,0.12)', countKey: 'learningPaths'},
+  { iconKey: 'bug',       title: 'Bug Fix AI',        desc: 'Root cause diagnosis & fix.',       path: '/bug-fix',     iconColor: '#dc2626', glow: 'rgba(220,38,38,0.12)',  countKey: 'bugFixes'   },
 ];
 const QUICK = [
-  { iconKey: 'resume',   label: 'Analyze a resume',    path: '/resume',      iconColor: '#2563eb' },
-  { iconKey: 'interview',label: 'Start mock interview', path: '/interview',   iconColor: '#059669' },
-  { iconKey: 'code',     label: 'Review my code',       path: '/code-review', iconColor: '#d97706' },
-  { iconKey: 'bug',      label: 'Fix a bug',             path: '/bug-fix',     iconColor: '#dc2626' },
+  { iconKey: 'resume',    label: 'Analyze a resume',    path: '/resume',      iconColor: '#2563eb' },
+  { iconKey: 'interview', label: 'Start mock interview', path: '/interview',   iconColor: '#059669' },
+  { iconKey: 'code',      label: 'Review my code',       path: '/code-review', iconColor: '#d97706' },
+  { iconKey: 'bug',       label: 'Fix a bug',             path: '/bug-fix',     iconColor: '#dc2626' },
 ];
-const ACTIVITIES = [
-  { iconKey: 'resume',   color: '#3b82f6', label: '<strong>Resume analyzed</strong> — Senior Frontend role',  time: '2h ago',    detail: 'ATS Score: 82/100' },
-  { iconKey: 'code',     color: '#f59e0b', label: '<strong>Code review</strong> — useEffect cleanup flagged',  time: '5h ago',    detail: null },
-  { iconKey: 'interview',color: '#10b981', label: '<strong>Mock interview</strong> — System design session',   time: 'Yesterday', detail: 'Score: 78/100' },
-  { iconKey: 'learning', color: '#8b5cf6', label: '<strong>Learning path</strong> — React Advanced, 4/8',     time: '2d ago',    detail: null },
-  { iconKey: 'bug',      color: '#ef4444', label: '<strong>Bug fix</strong> — Async race condition',           time: '3d ago',    detail: null },
-];
-const WEEKLY = [18, 34, 22, 41, 28, 12, 8];
-const DAYS   = ['M','T','W','T','F','S','S'];
+const DAYS = ['M','T','W','T','F','S','S'];
+
+// ── Timeago helper ────────────────────────────────────────────
+function timeAgo(date) {
+  const diff = Date.now() - new Date(date).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60)   return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24)    return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days === 1)  return 'Yesterday';
+  return `${days}d ago`;
+}
 
 // ── Subcomponents ──────────────────────────────────────────────
 function StatCard({ stat, T }) {
@@ -115,13 +115,13 @@ function ToolCard({ tool, onClick, T }) {
   );
 }
 
-function UsageChart({ T }) {
+function UsageChart({ T, weekly = [0,0,0,0,0,0,0] }) {
   const [hov, setHov] = useState(null);
-  const max = Math.max(...WEEKLY);
+  const max = Math.max(...weekly, 1);
   const W = 260, H = 72, bw = 24, gap = (W - bw * 7) / 6;
   return (
     <svg viewBox={`0 0 ${W} ${H + 18}`} width="100%" style={{ display: 'block' }}>
-      {WEEKLY.map((v, i) => {
+      {weekly.map((v, i) => {
         const bh = Math.max(4, Math.round((v / max) * H));
         const x = i * (bw + gap), y = H - bh;
         const isHov = hov === i, isTop = i === 3;
@@ -161,8 +161,99 @@ export default function Dashboard() {
   const { theme } = useTheme();
   const navigate  = useNavigate();
   const isDark    = theme === 'dark';
-  const credits   = user?.credits ?? 720;
+  const credits   = user?.credits ?? 0;
   const creditsPct = Math.round((credits / 1000) * 100);
+
+  // ── Real data from API ──────────────────────────────────────
+  const [stats,      setStats]      = useState(null);
+  const [activities, setActivities] = useState([]);
+  const [weekly,     setWeekly]     = useState([0,0,0,0,0,0,0]);
+  const [loading,    setLoading]    = useState(true);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        // Fetch all in parallel
+        const [resumeRes, interviewRes, codeRes, learningRes, bugRes] = await Promise.allSettled([
+          resumeService.getAll?.() || Promise.resolve({ data: { data: [] } }),
+          interviewService.getAll?.() || Promise.resolve({ data: { data: [] } }),
+          codeReviewService.getAll?.() || Promise.resolve({ data: { data: [] } }),
+          learningPathService.getAll?.() || Promise.resolve({ data: { data: [] } }),
+          bugFixService.getAll?.() || Promise.resolve({ data: { data: [] } }),
+        ]);
+
+        const resumes    = resumeRes.value?.data?.data    || [];
+        const interviews = interviewRes.value?.data?.data || [];
+        const codeRevs   = codeRes.value?.data?.data      || [];
+        const paths      = learningRes.value?.data?.data  || [];
+        const bugs       = bugRes.value?.data?.data       || [];
+
+        // Build stats from real data
+        const avgScore = resumes.length
+          ? Math.round(resumes.reduce((s, r) => s + (r.analysis?.atsScore || 0), 0) / resumes.length)
+          : 0;
+
+        setStats({
+          resumes:      resumes.length,
+          avgScore,
+          codeReviews:  codeRevs.length,
+          interviews:   interviews.length,
+          learningPaths:paths.length,
+          bugFixes:     bugs.length,
+        });
+
+        // Build activity feed from all recent items
+        const allItems = [
+          ...resumes.map(r    => ({ iconKey:'resume',    color:'#3b82f6', label:`<strong>Resume analyzed</strong>`, detail: r.analysis?.atsScore ? `ATS Score: ${r.analysis.atsScore}/100` : null, date: r.createdAt })),
+          ...interviews.map(i => ({ iconKey:'interview', color:'#10b981', label:`<strong>Interview session</strong>`, detail: i.overallScore ? `Score: ${i.overallScore}/100` : null, date: i.createdAt || i.startedAt })),
+          ...codeRevs.map(c   => ({ iconKey:'code',      color:'#f59e0b', label:`<strong>Code reviewed</strong>`,   detail: c.review?.overallScore ? `Score: ${c.review.overallScore}/100` : null, date: c.createdAt })),
+          ...paths.map(p      => ({ iconKey:'learning',  color:'#8b5cf6', label:`<strong>Learning path</strong>`,   detail: p.title || null, date: p.createdAt })),
+          ...bugs.map(b       => ({ iconKey:'bug',       color:'#ef4444', label:`<strong>Bug diagnosed</strong>`,   detail: null, date: b.createdAt })),
+        ]
+          .filter(a => a.date)
+          .sort((a, b) => new Date(b.date) - new Date(a.date))
+          .slice(0, 5)
+          .map(a => ({ ...a, time: timeAgo(a.date) }));
+
+        setActivities(allItems);
+
+        // Build weekly chart (last 7 days)
+        const week = [0,0,0,0,0,0,0];
+        const allDates = [...resumes, ...interviews, ...codeRevs, ...paths, ...bugs].map(i => i.createdAt || i.startedAt).filter(Boolean);
+        allDates.forEach(d => {
+          const dayIdx = 6 - Math.floor((Date.now() - new Date(d)) / 86400000);
+          if (dayIdx >= 0 && dayIdx < 7) week[dayIdx]++;
+        });
+        setWeekly(week);
+
+      } catch (err) {
+        console.error('Dashboard fetch error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboard();
+  }, []);
+
+  // ── Dynamic stats cards ─────────────────────────────────────
+  const STATS = stats ? [
+    { iconKey:'resume',    label:'Analyses run',  value: String(stats.resumes),    delta: stats.resumes > 0 ? null : null,   sub:'total',       iconColor:'#2563eb', glowColor:'rgba(37,99,235,0.15)'  },
+    { iconKey:'star',      label:'Avg ATS score', value: stats.avgScore ? `${stats.avgScore}` : '—', delta: null, sub:'resume analyses', iconColor:'#059669', glowColor:'rgba(5,150,105,0.15)'  },
+    { iconKey:'code',      label:'Code reviews',  value: String(stats.codeReviews), delta: null,                sub:'total',       iconColor:'#d97706', glowColor:'rgba(217,119,6,0.15)'  },
+    { iconKey:'bolt',      label:'Credits left',  value: String(credits),           delta: null,                sub:`of 1,000`,    iconColor:'#7c3aed', glowColor:'rgba(124,58,237,0.15)' },
+  ] : [
+    { iconKey:'resume',    label:'Analyses run',  value:'—', delta:null, sub:'loading...', iconColor:'#2563eb', glowColor:'rgba(37,99,235,0.15)'  },
+    { iconKey:'star',      label:'Avg ATS score', value:'—', delta:null, sub:'loading...', iconColor:'#059669', glowColor:'rgba(5,150,105,0.15)'  },
+    { iconKey:'code',      label:'Code reviews',  value:'—', delta:null, sub:'loading...', iconColor:'#d97706', glowColor:'rgba(217,119,6,0.15)'  },
+    { iconKey:'bolt',      label:'Credits left',  value: String(credits), delta:null, sub:'of 1,000', iconColor:'#7c3aed', glowColor:'rgba(124,58,237,0.15)' },
+  ];
+
+  const TOOLS = TOOLS_CONFIG.map(t => ({
+    ...t,
+    stat: stats
+      ? (stats[t.countKey] > 0 ? `${stats[t.countKey]} ${t.countKey === 'resumes' ? 'analyses' : t.countKey === 'interviews' ? 'sessions' : t.countKey === 'codeReviews' ? 'reviews' : t.countKey === 'learningPaths' ? 'active' : 'fixed'}` : 'Try it →')
+      : '...',
+  }));
 
   const T = {
     text1:      isDark ? '#ffffff'                         : '#0f1117',
@@ -208,17 +299,34 @@ export default function Dashboard() {
         @keyframes devmate-spin { to{transform:rotate(360deg)} }
         .ds { animation: dfadeUp 0.4s ease both; }
 
-        .stats-grid  { display:grid; grid-template-columns:repeat(2,1fr);  gap:clamp(8px,2vw,12px); }
-        .chart-grid  { display:grid; grid-template-columns:1fr;             gap:clamp(8px,2vw,12px); }
-        .tools-grid  { display:grid; grid-template-columns:repeat(2,1fr);  gap:clamp(8px,2vw,10px); }
-        .bottom-grid { display:grid; grid-template-columns:1fr;             gap:clamp(8px,2vw,12px); }
+        /* ── Mobile first grid system ── */
+        .stats-grid  { display:grid; grid-template-columns:1fr 1fr;        gap:10px; }
+        .chart-grid  { display:grid; grid-template-columns:1fr;             gap:10px; }
+        .tools-grid  { display:grid; grid-template-columns:1fr 1fr;         gap:10px; }
+        .bottom-grid { display:grid; grid-template-columns:1fr;             gap:10px; }
         .dqrow { transition:all 0.15s ease !important; }
         .dqrow:hover { background:${T.quickHov} !important; transform:translateX(3px); }
 
-        @media(min-width:1024px) { .stats-grid { grid-template-columns:repeat(4,1fr); } }
-        @media(min-width:768px)  { .chart-grid { grid-template-columns:minmax(0,1.6fr) minmax(0,1fr); } .bottom-grid { grid-template-columns:minmax(0,1fr) minmax(0,260px); } }
-        @media(min-width:640px)  { .tools-grid { grid-template-columns:repeat(3,1fr); } }
-        @media(min-width:1024px) { .tools-grid { grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); } }
+        /* ── 360px — very small phones: 1 col stats ── */
+        @media(max-width:360px) {
+          .stats-grid { grid-template-columns:1fr; }
+          .tools-grid { grid-template-columns:1fr; }
+        }
+        /* ── 640px — tablet: 3-col tools ── */
+        @media(min-width:640px) {
+          .tools-grid { grid-template-columns:repeat(3,1fr); gap:12px; }
+          .stats-grid { gap:12px; }
+        }
+        /* ── 768px — tablet landscape: side-by-side chart/credits ── */
+        @media(min-width:768px) {
+          .chart-grid  { grid-template-columns:minmax(0,1.6fr) minmax(0,1fr); gap:14px; }
+          .bottom-grid { grid-template-columns:minmax(0,1fr) minmax(0,260px); gap:14px; }
+        }
+        /* ── 1024px — desktop: 4-col stats, auto tools ── */
+        @media(min-width:1024px) {
+          .stats-grid { grid-template-columns:repeat(4,1fr); gap:14px; }
+          .tools-grid { grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px; }
+        }
       `}</style>
 
       {isDark ? <><DashStars /><DashNebula /></> : <DashAurora />}
@@ -253,17 +361,17 @@ export default function Dashboard() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px', flexWrap: 'wrap', gap: '6px' }}>
               <div>
                 <div style={{ fontSize: 'clamp(12px,1.5vw,13px)', fontWeight: 600, color: T.text1, fontFamily: 'DM Sans, sans-serif' }}>AI usage this week</div>
-                <div style={{ fontSize: '11px', color: T.text3, marginTop: '2px', fontFamily: 'DM Sans, sans-serif' }}>163 total · hover for details</div>
+                <div style={{ fontSize: '11px', color: T.text3, marginTop: '2px', fontFamily: 'DM Sans, sans-serif' }}>{weekly.reduce((a,b)=>a+b,0)} total this week · hover for details</div>
               </div>
               <span style={{ fontSize: '11px', fontWeight: 600, padding: '3px 8px', borderRadius: '6px', background: 'rgba(16,185,129,0.12)', color: '#059669', flexShrink: 0, fontFamily: 'DM Sans, sans-serif' }}>↑ 18%</span>
             </div>
-            <UsageChart T={T} />
+            <UsageChart T={T} weekly={weekly} />
           </Panel>
 
           <Panel style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontSize: 'clamp(12px,1.5vw,13px)', fontWeight: 600, color: T.text1, marginBottom: '10px', fontFamily: 'DM Sans, sans-serif' }}>Credits usage</div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '5px', marginBottom: '10px' }}>
-              <span style={{ fontSize: 'clamp(24px,4vw,30px)', fontWeight: 700, color: T.text1, lineHeight: 1, fontFamily: 'DM Sans, sans-serif' }}>{credits}</span>
+              <span style={{ fontSize: 'clamp(24px,4vw,30px)', fontWeight: 700, color: T.text1, lineHeight: 1, fontFamily: 'DM Sans, sans-serif' }}>{user?.credits ?? 0}</span>
               <span style={{ fontSize: '12px', color: T.text3, fontFamily: 'DM Sans, sans-serif' }}>/ 1,000</span>
             </div>
             <div style={{ height: 5, background: T.trackBg, borderRadius: 3, overflow: 'hidden', marginBottom: '6px' }}>
@@ -316,7 +424,27 @@ export default function Dashboard() {
               <span style={{ fontSize: 'clamp(12px,1.5vw,13px)', fontWeight: 600, color: T.text1, fontFamily: 'DM Sans, sans-serif' }}>Recent activity</span>
               <span style={{ fontSize: '11px', color: T.text3, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>View all →</span>
             </div>
-            {ACTIVITIES.map((a, i) => <ActivityRow key={i} act={a} T={T} />)}
+            {loading ? (
+            [1,2,3].map(i => (
+              <div key={i} style={{ display:'flex', gap:'10px', padding:'9px 0', borderBottom:`1px solid ${T.divider}`, alignItems:'center' }}>
+                <div style={{ width:28, height:28, borderRadius:'8px', background:T.trackBg, flexShrink:0 }} />
+                <div style={{ flex:1 }}>
+                  <div style={{ height:10, width:'60%', background:T.trackBg, borderRadius:4, marginBottom:5 }} />
+                  <div style={{ height:8,  width:'35%', background:T.trackBg, borderRadius:4 }} />
+                </div>
+              </div>
+            ))
+          ) : activities.length > 0 ? (
+            activities.map((a, i) => <ActivityRow key={i} act={a} T={T} />)
+          ) : (
+            <div style={{ textAlign:'center', padding:'24px 0' }}>
+              <div style={{ width:40, height:40, borderRadius:'12px', background:T.trackBg, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 10px' }}>
+                <Icon d={IC.activity} size={18} color={T.text3} />
+              </div>
+              <div style={{ fontSize:'13px', fontWeight:600, color:T.text2, fontFamily:'DM Sans, sans-serif', marginBottom:4 }}>No activity yet</div>
+              <div style={{ fontSize:'12px', color:T.text3, fontFamily:'DM Sans, sans-serif' }}>Use any AI tool to see your history here</div>
+            </div>
+          )}
           </Panel>
 
           <Panel>

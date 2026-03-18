@@ -17,3 +17,4 @@ mongoose.connection.on('disconnected', () => {
 });
 
 module.exports = { connectDB };
+console.log("👉 ENV VALUE:", process.env.MONGODB_URI);

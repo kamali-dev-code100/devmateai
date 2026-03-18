@@ -133,7 +133,7 @@ function FloatingNav({ isDark, toggleTheme, onSignIn, onGetStarted, text1, text2
       initial={{ y:-90, opacity:0 }}
       animate={{ y:0, opacity:1 }}
       transition={{ duration:0.6, delay:0.1, ease:[0.22,1,0.36,1] }}
-      style={{ position:'fixed', top:14, left:0, right:0, margin:'0 auto', zIndex:200, width:'calc(100% - 48px)', maxWidth:'1060px' }}>
+      style={{ position:'fixed', top:14, left:0, right:0, margin:'0 auto', zIndex:200, width:'calc(100% - clamp(16px,4vw,48px))', maxWidth:'1060px' }}>
 
       {/* Glow line when scrolled */}
       {scrolled && (
@@ -149,7 +149,7 @@ function FloatingNav({ isDark, toggleTheme, onSignIn, onGetStarted, text1, text2
         minHeight: scrolled ? '52px' : '60px',
         display: 'flex', alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 20px',
+        padding: '0 clamp(10px,3vw,20px)',
         transition: 'min-height 0.35s ease, background 0.35s ease, border-color 0.35s ease',
         boxShadow: isDark
           ? scrolled ? '0 8px 48px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.05) inset' : '0 4px 24px rgba(0,0,0,0.25)'
@@ -177,7 +177,7 @@ function FloatingNav({ isDark, toggleTheme, onSignIn, onGetStarted, text1, text2
           </div>
           <div>
             <span style={{ fontFamily:'Instrument Serif, serif', fontSize:'17px', color:text1, letterSpacing:'-0.01em', display:'block', lineHeight:1 }}>DevMate AI</span>
-            {!scrolled && <span style={{ fontSize:'9px', fontWeight:600, color:'#10b981', letterSpacing:'0.08em', textTransform:'uppercase', fontFamily:'DM Sans, sans-serif', opacity:0.8 }}>Developer Intelligence</span>}
+            {!scrolled && <span className="nav-devint" style={{ fontSize:'9px', fontWeight:600, color:'#10b981', letterSpacing:'0.08em', textTransform:'uppercase', fontFamily:'DM Sans, sans-serif', opacity:0.8 }}>Developer Intelligence</span>}
           </div>
         </motion.div>
 
@@ -210,7 +210,7 @@ function FloatingNav({ isDark, toggleTheme, onSignIn, onGetStarted, text1, text2
           <motion.button
             whileHover={{ scale:1.04, boxShadow:'0 0 24px rgba(16,185,129,0.5), 0 6px 20px rgba(16,185,129,0.3)' }}
             whileTap={{ scale:0.96 }}
-            onClick={onGetStarted}
+            onClick={onGetStarted} className="nav-getstarted"
             style={{ padding:'8px 18px', borderRadius:'10px', background:'linear-gradient(135deg,#10b981,#0891b2)', color:'#fff', fontSize:'13px', fontWeight:700, cursor:'pointer', border:'none', fontFamily:'DM Sans, sans-serif', boxShadow:'0 2px 14px rgba(16,185,129,0.35)', whiteSpace:'nowrap', letterSpacing:'0.01em' }}>
             Get Started →
           </motion.button>
@@ -312,11 +312,14 @@ export default function Landing() {
         .nav-signin    { display:flex !important; }
         .nav-hamburger { display:none !important; }
         .lnav-links    { display:flex !important; }
-
         @media(max-width:860px) {
           .nav-signin    { display:none !important; }
           .nav-hamburger { display:flex !important; }
           .lnav-links    { display:none !important; }
+        }
+        @media(max-width:480px) {
+          .nav-getstarted { display:none !important; }
+          .nav-devint     { display:none !important; }
         }
         @media(max-width:700px) {
           .feat-grid   { grid-template-columns:1fr 1fr !important; }

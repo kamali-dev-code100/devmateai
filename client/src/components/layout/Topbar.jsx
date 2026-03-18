@@ -152,6 +152,9 @@ export default function Topbar() {
         .tb-notif-item      { transition: background 0.15s; cursor: pointer; }
         .tb-mark-all:hover  { color: #10b981 !important; }
         .tb-mark-all        { transition: color 0.15s; cursor: pointer; }
+        @media (min-width: 481px) {
+          .tb-notif-panel { left: auto !important; right: 12px !important; width: 360px !important; }
+        }
 
         .tb-page-sub    { display: none; }
         .tb-logo-text   { display: none; }
@@ -240,8 +243,11 @@ export default function Topbar() {
             {/* ── Notification Panel ── */}
             {notifOpen && (
               <div className="tb-notif-panel" style={{
-                position: 'absolute', top: 'calc(100% + 10px)', right: 0,
-                width: 'clamp(300px, 90vw, 360px)',
+                position: 'fixed',
+                top: '70px',
+                right: '8px',
+                left: '8px',
+                width: 'auto',
                 background: T.panelBg,
                 border: `1px solid ${T.panelBrd}`,
                 borderRadius: '16px',
@@ -273,7 +279,7 @@ export default function Topbar() {
                 </div>
 
                 {/* Notification list */}
-                <div style={{ maxHeight: '340px', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <div style={{ maxHeight: 'min(340px, calc(100dvh - 180px))', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
                   {notifs.map((n, i) => (
                     <div key={n.id} className="tb-notif-item"
                       onClick={() => handleNotifClick(n)}

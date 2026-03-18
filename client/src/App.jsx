@@ -7,23 +7,33 @@ import AppShell from './components/layout/AppShell';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 
 // Public pages
-import Landing from './pages/Landing';
-import Login from './pages/auth/Login';
+import Landing  from './pages/Landing';
+import AuthPage from './pages/AuthPage';   // ← ADDED
+import Login    from './pages/auth/Login';
 import Register from './pages/auth/Register';
 
 // App pages
-import Dashboard from './pages/Dashboard';
-import ResumeAnalyzer from './pages/tools/ResumeAnalyzer';
+import Dashboard       from './pages/Dashboard';
+import ResumeAnalyzer  from './pages/tools/ResumeAnalyzer';
 import InterviewTrainer from './pages/tools/InterviewTrainer';
-import CodeReviewer from './pages/tools/CodeReviewer';
-import LearningPaths from './pages/tools/LearningPaths';
+import CodeReviewer    from './pages/tools/CodeReviewer';
+import LearningPaths   from './pages/tools/LearningPaths';
 import BugFixAssistant from './pages/tools/BugFixAssistant';
-import Profile from './pages/Profile';
-import Settings from './pages/Settings';
+import Profile         from './pages/Profile';
+import Settings        from './pages/Settings';
 
 export default function App() {
-  const { fetchMe, token } = useAuth();
+  const { fetchMe, token, setToken } = useAuth();
   const { theme } = useTheme();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const oauthToken = params.get('token');
+    if (oauthToken) {
+      setToken(oauthToken);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
 
   useEffect(() => {
     if (token) fetchMe();
@@ -32,8 +42,9 @@ export default function App() {
   return (
     <Routes>
       {/* Public */}
-      <Route path="/" element={<Landing />} />
-      <Route path="/login" element={<Login />} />
+      <Route path="/"     element={<Landing />} />
+      <Route path="/auth" element={<AuthPage />} />  {/* ← ADDED */}
+      <Route path="/login"    element={<Login />} />
       <Route path="/register" element={<Register />} />
 
       {/* Protected — wrapped in AppShell (sidebar + topbar) */}

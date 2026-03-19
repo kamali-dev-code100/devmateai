@@ -28,22 +28,27 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (Postman, mobile)
+    // Allow no origin (Postman, mobile apps)
     if (!origin) return callback(null, true);
-    // Remove trailing slash for comparison
-    const cleanOrigin = origin.replace(/\/$/, '');
-    const cleanAllowed = allowedOrigins.map(o => o?.replace(/\/$/, ''));
-    if (cleanAllowed.includes(cleanOrigin)) {
-      return callback(null, true);
-    }
-    console.log('CORS blocked origin:', origin);
-    console.log('Allowed origins:', cleanAllowed);
+
+    // Allow localhost
+    if (origin.includes('localhost')) return callback(null, true);
+
+    // Allow your Vercel domain (all preview URLs too)
+    if (origin.includes('vercel.app')) return callback(null, true);
+
+    // Allow your custom domain if you add one later
+    if (origin.includes('devmate-ai')) return callback(null, true);
+
+    console.log('CORS blocked:', origin);
     callback(new Error(`CORS blocked: ${origin}`));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With'],
 }));
+
+app.options('*', cors());
 
 // Handle preflight
 app.options('*', cors());

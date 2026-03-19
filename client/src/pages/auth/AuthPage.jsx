@@ -364,7 +364,10 @@ export default function AuthPage() {
               style={{ display:'flex', gap:8, marginBottom:20 }}>
               {[{Icon:GithubIcon,label:'GitHub',prov:'github'},{Icon:GoogleIcon,label:'Google',prov:'google'}].map(({Icon,label,prov}) => (
                 <button key={prov} className="social-btn"
-                  onClick={() => window.location.href=`http://localhost:5000/api/auth/${prov}`}
+                  onClick={() => {
+  const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  window.location.href = `${API}/api/auth/${prov}`;
+}}
                   style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:8, padding:'11px 14px', borderRadius:'11px', background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', color:'rgba(255,255,255,0.8)', fontSize:'13px', fontWeight:500, cursor:'pointer', fontFamily:'DM Sans, sans-serif' }}>
                   <Icon />{label}
                 </button>

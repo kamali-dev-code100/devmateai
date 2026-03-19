@@ -12,9 +12,9 @@ server/node_modules/
 .env.*.local
 client/.env
 client/.env.local
+client/.env.production
 server/.env
 server/.env.local
-
 # ── Build output ──────────────────────────────────────────────
 dist/
 client/dist/

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth, useTheme } from '../hooks';
 import { userService } from '../services';
+import api from '../services/api';
 import { Icon, IC, PrimaryBtn, GhostBtn } from '../components/ui/Icons';
 import toast from 'react-hot-toast';
 
@@ -90,7 +91,37 @@ function ProgressBar({ value, max = 100, color = '#10b981' }) {
 
 export default function Profile() {
   const T = useT();
-  const { user, fetchMe } = useAuth();
+const { user, fetchMe } = useAuth();
+const [stats, setStats] = useState({
+  totalAnalyses: 0,
+  avgResumeScore: 0,
+  interviewsDone: 0,
+});
+
+useEffect(() => {
+  const fetchStats = async () => {
+    try {
+      const [resumes, interviews] = await Promise.all([
+        api.get('/resume'),
+        api.get('/interview'),
+      ]);
+
+      const resumeList = resumes.data.data || [];
+      const interviewList = interviews.data.data || [];
+
+      const avgScore = resumeList.length
+        ? Math.round(resumeList.reduce((sum, r) => sum + (r.analysis?.atsScore || 0), 0) / resumeList.length)
+        : 0;
+
+      setStats({
+        totalAnalyses: resumeList.length,
+        avgResumeScore: avgScore,
+        interviewsDone: interviewList.length,
+      });
+    } catch {}
+  };
+  fetchStats();
+}, []);
   const [form, setForm]    = useState({ name: '', bio: '', role: 'fullstack', skills: [] });
   const [newSkill, setNewSkill] = useState('');
   const [saving, setSaving]     = useState(false);
@@ -148,9 +179,9 @@ export default function Profile() {
         {/* ── Stats ── */}
         <div className="pf-stats">
           {[
-            { iconKey:'resume',   label:'Total analyses',  value:'142', delta:'Since joining',   color:'#2563eb' },
-            { iconKey:'star',     label:'Avg resume score', value:'84',  delta:'+6 pts this month',color:'#059669' },
-            { iconKey:'interview',label:'Interviews done',  value:'14',  delta:'3 this month',    color:'#d97706' },
+           { iconKey:'resume',    label:'Total analyses',  value: stats.totalAnalyses, delta:'Since joining', color:'#2563eb' },
+{ iconKey:'star',      label:'Avg resume score', value: stats.avgResumeScore || '—', delta: stats.avgResumeScore ? 'ATS score avg' : 'No analyses yet', color:'#059669' },
+{ iconKey:'interview', label:'Interviews done',  value: stats.interviewsDone, delta: stats.interviewsDone > 0 ? `${stats.interviewsDone} sessions` : 'No sessions yet', color:'#d97706' },
           ].map(s => (
             <Card key={s.label} style={{ padding: 'clamp(12px,2vw,16px)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>

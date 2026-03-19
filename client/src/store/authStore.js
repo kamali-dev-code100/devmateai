@@ -10,19 +10,32 @@ const useAuthStore = create(
       isLoading: false,
 
       setUser: (user) => set({ user }),
-      setToken: (token) => set({ token }),
+     setToken: (token) => {
+  set({ token });
+  // Also fetch user data immediately
+  if (token) {
+    api.get('/auth/me', {
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(({ data }) => {
+      set({ user: data.data });
+    }).catch(() => {
+      set({ token: null, user: null });
+    });
+  }
+},
 
-      login: async (email, password) => {
-        set({ isLoading: true });
-        try {
-          const { data } = await api.post('/auth/login', { email, password });
-          set({ user: data.data.user, token: data.data.accessToken, isLoading: false });
-          return { success: true };
-        } catch (err) {
-          set({ isLoading: false });
-          return { success: false, message: err.response?.data?.message || 'Login failed' };
-        }
-      },
+   login: async (email, password) => {
+  set({ isLoading: true });
+  try {
+    const { data } = await api.post('/auth/login', { email, password });
+    set({ user: data.data.user, token: data.data.accessToken, isLoading: false });
+    return { success: true };
+  } catch (err) {
+    set({ isLoading: false, user: null, token: null });
+    const message = err.response?.data?.message || 'Invalid email or password';
+    return { success: false, message };
+  }
+},
 
       register: async (payload) => {
         set({ isLoading: true });

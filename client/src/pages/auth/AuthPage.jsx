@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth, useTheme } from '../hooks';
+import { useAuth, useTheme } from '../../hooks';
 import toast from 'react-hot-toast';
 
 // ── Icons ─────────────────────────────────────────────────────

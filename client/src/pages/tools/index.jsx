@@ -84,8 +84,32 @@ function SelectInput({ value, onChange, options, style = {} }) {
   const T = useT();
   return (
     <select value={value} onChange={onChange}
-      style={{ padding: '8px 12px', background: T.inputBg, border: `1px solid ${T.inputBrd}`, borderRadius: '9px', color: T.text1, fontSize: '12px', cursor: 'pointer', outline: 'none', fontFamily: 'DM Sans, sans-serif', minHeight: 36, ...style }}>
-      {options.map(o => <option key={o}>{o}</option>)}
+      style={{
+        padding: '8px 12px',
+        background: T.isDark ? '#1a1a2e' : '#ffffff',
+        border: `1px solid ${T.inputBrd}`,
+        borderRadius: '9px',
+        color: T.text1,
+        fontSize: '12px',
+        cursor: 'pointer',
+        outline: 'none',
+        fontFamily: 'DM Sans, sans-serif',
+        minHeight: 36,
+        colorScheme: T.isDark ? 'dark' : 'light',
+        ...style
+      }}>
+      {options.map(o => (
+        <option
+          key={o}
+          value={o}
+          style={{
+            background: T.isDark ? '#1a1a2e' : '#ffffff',
+            color: T.text1,
+          }}
+        >
+          {o}
+        </option>
+      ))}
     </select>
   );
 }
@@ -189,7 +213,9 @@ function ChatWindow({ messages, onSend, loading, placeholder = 'Type a message..
   );
 }
 
-const GLOBAL_STYLES = `
+const GLOBAL_STYLES = ` select { color-scheme: inherit; }
+  .dark select, .dark select option { background: #1a1a2e !important; color: #fff !important; }
+  .light select, .light select option { background: #ffffff !important; color: #111 !important; }
   @keyframes chatBounce { 0%,80%,100%{transform:scale(0.8);opacity:0.5}40%{transform:scale(1.2);opacity:1} }
   @keyframes devmate-spin { to{transform:rotate(360deg)} }
   @keyframes tfadeUp { from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none} }

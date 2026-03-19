@@ -4,10 +4,9 @@ import useUIStore from '../store/uiStore';
 
 // ─── useAuth ──────────────────────────────────────────────────
 export const useAuth = () => {
-  const { user, token, isLoading, login, register, logout, fetchMe } = useAuthStore();
-  return { user, token, isLoading, isAuthenticated: !!user, login, register, logout, fetchMe };
+  const { user, token, isLoading, login, register, logout, fetchMe, setToken, setUser } = useAuthStore();
+  return { user, token, isLoading, isAuthenticated: !!user, login, register, logout, fetchMe, setToken, setUser };
 };
-
 // ─── useTheme ─────────────────────────────────────────────────
 export const useTheme = () => {
   const { theme, toggleTheme, setTheme, accentColor, setAccentColor } = useUIStore();

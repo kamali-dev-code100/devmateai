@@ -31,10 +31,11 @@ const handleOAuthSuccess = async (req, res) => {
 
     await User.findByIdAndUpdate(req.user._id, { refreshToken });
 
+    // Send token in URL and also set cookies
     res
       .cookie('accessToken', accessToken, cookieOptions)
       .cookie('refreshToken', refreshToken, cookieOptions)
-      .redirect(`${process.env.CLIENT_URL}/dashboard?token=${accessToken}`);
+    .redirect(`${process.env.CLIENT_URL}/callback?token=${accessToken}`);
   } catch (err) {
     res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_failed`);
   }

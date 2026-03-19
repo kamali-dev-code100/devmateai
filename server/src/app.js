@@ -21,23 +21,32 @@ app.use(helmet({
 // ─── CORS ─────────────────────────────────────────────────────
 const allowedOrigins = [
   process.env.CLIENT_URL,
+  'https://devmate-ai-sigma.vercel.app',
   'http://localhost:5173',
   'http://localhost:3000',
 ].filter(Boolean);
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, Postman)
+    // Allow requests with no origin (Postman, mobile)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
+    // Remove trailing slash for comparison
+    const cleanOrigin = origin.replace(/\/$/, '');
+    const cleanAllowed = allowedOrigins.map(o => o?.replace(/\/$/, ''));
+    if (cleanAllowed.includes(cleanOrigin)) {
       return callback(null, true);
     }
+    console.log('CORS blocked origin:', origin);
+    console.log('Allowed origins:', cleanAllowed);
     callback(new Error(`CORS blocked: ${origin}`));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With'],
 }));
+
+// Handle preflight
+app.options('*', cors());
 
 // Handle preflight requests
 app.options('*', cors());
